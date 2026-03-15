@@ -62,13 +62,12 @@ php -S localhost:8080
 ## 📸 Screenshots
 
 ### Light Mode - Professional Layout
-*Clean, modern interface with hierarchical org chart visualization*
+![Light Mode](screenshots/light-mode.png)
+*Clean, modern interface with hierarchical org chart visualization, templates, department filtering, and live statistics*
 
 ### Dark Mode - Executive Dashboard  
-*Professional dark theme perfect for presentations*
-
-### Add Person Modal
-*Comprehensive form for adding team members with all relevant details*
+![Dark Mode](screenshots/dark-mode.png)
+*Professional dark theme perfect for presentations and late-night org chart sessions*
 
 ## 🛠️ Architecture
 
