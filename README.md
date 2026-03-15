@@ -2,6 +2,8 @@
 
 **Professional Organization Chart Builder - Built in Under 5 Minutes**
 
+![Hierarchy as a Service](screenshots/hierarchy-meme.jpg)
+
 A complete, production-ready org chart builder that rivals expensive SaaS solutions. Built to demonstrate rapid software development capabilities.
 
 ![Lulo's Org Charts](https://img.shields.io/badge/Built%20in-4%20minutes-brightgreen) ![License](https://img.shields.io/badge/License-MIT-blue) ![No Dependencies](https://img.shields.io/badge/Dependencies-Zero-orange)
