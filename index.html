@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lulo's Org Charts - Professional Organization Chart Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-hover: #475569;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo::before {
+            content: "🏢";
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            background: transparent;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border-hover);
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8125rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-right: 1rem;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            width: 200px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        /* Main Layout */
+        .app-layout {
+            display: flex;
+            height: calc(100vh - 120px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-section {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .template-card {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+            background: var(--bg-secondary);
+        }
+
+        .template-card:hover {
+            border-color: var(--primary-color);
+            background: var(--bg-primary);
+        }
+
+        .template-card.active {
+            border-color: var(--primary-color);
+            background: rgb(37 99 235 / 0.05);
+        }
+
+        .template-name {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-top: 0.375rem;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .canvas-wrapper {
+            position: absolute;
+            inset: 0;
+            overflow: auto;
+            background: var(--bg-tertiary);
+        }
+
+        .org-chart-canvas {
+            min-width: 100%;
+            min-height: 100%;
+            background: white;
+            position: relative;
+            cursor: grab;
+        }
+
+        .org-chart-canvas.dragging {
+            cursor: grabbing;
+        }
+
+        .org-chart-canvas.selecting {
+            cursor: crosshair;
+        }
+
+        /* Person Card */
+        .person-card {
+            position: absolute;
+            width: 200px;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            cursor: move;
+            transition: all 0.15s ease;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+
+        .person-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-1px);
+        }
+
+        .person-card.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1), var(--shadow-lg);
+        }
+
+        .person-card.dragging {
+            z-index: 1000;
+            transform: rotate(3deg);
+        }
+
+        .person-header {
+            padding: 1rem 1rem 0.5rem;
+            text-align: center;
+        }
+
+        .person-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .person-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .person-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .person-title {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .person-department {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 9999px;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        /* Department Colors */
+        .dept-engineering { background: #3b82f6; }
+        .dept-design { background: #8b5cf6; }
+        .dept-marketing { background: #10b981; }
+        .dept-sales { background: #f59e0b; }
+        .dept-hr { background: #ef4444; }
+        .dept-finance { background: #6366f1; }
+        .dept-operations { background: #06b6d4; }
+        .dept-executive { background: #1f2937; }
+
+        /* Connection Lines */
+        .connection-line {
+            position: absolute;
+            background: #94a3b8;
+            z-index: 1;
+        }
+
+        .connection-line.horizontal {
+            height: 2px;
+        }
+
+        .connection-line.vertical {
+            width: 2px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgb(0 0 0 / 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.15s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            width: 90vw;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem 1.5rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.375rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            color: white;
+            font-size: 0.875rem;
+            box-shadow: var(--shadow-lg);
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.success { background: var(--success-color); }
+        .toast.warning { background: var(--warning-color); }
+        .toast.error { background: var(--danger-color); }
+        .toast.info { background: var(--primary-color); }
+
+        /* Zoom Controls */
+        .zoom-controls {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: var(--text-primary);
+            transition: background 0.15s ease;
+        }
+
+        .zoom-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        .zoom-level {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            padding: 0.25rem 0;
+            min-width: 150px;
+            z-index: 2000;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            transition: background 0.15s ease;
+        }
+
+        .context-menu-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .context-menu-item.danger {
+            color: var(--danger-color);
+        }
+
+        .context-menu-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 0.25rem 0;
+        }
+
+        /* Collaboration Indicators */
+        .collab-indicator {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid white;
+            animation: pulse 2s infinite;
+        }
+
+        .collab-indicator.user1 { background: #ef4444; }
+        .collab-indicator.user2 { background: #10b981; }
+        .collab-indicator.user3 { background: #f59e0b; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 250px;
+            }
+
+            .search-input {
+                width: 150px;
+            }
+
+            .header-controls {
+                gap: 0.25rem;
+            }
+
+            .btn {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.8125rem;
+            }
+
+            .toolbar {
+                padding: 0.5rem;
+                gap: 0.5rem;
+            }
+
+            .toolbar-group {
+                padding-right: 0.5rem;
+            }
+        }
+
+        /* Keyboard shortcuts help */
+        .shortcuts-help {
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            max-width: 200px;
+            box-shadow: var(--shadow-md);
+            display: none;
+        }
+
+        .shortcuts-help.show {
+            display: block;
+        }
+
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+
+        .shortcut-key {
+            font-family: monospace;
+            background: var(--bg-secondary);
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+        }
+
+        /* Loading states */
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            🐒 Lulo's Org Charts
+        </div>
+        <div class="header-controls">
+            <button class="btn btn-secondary btn-sm" id="undoBtn" disabled>
+                ↶ Undo
+            </button>
+            <button class="btn btn-secondary btn-sm" id="redoBtn" disabled>
+                ↷ Redo
+            </button>
+            <button class="btn btn-secondary btn-sm" id="themeToggle">
+                🌙 Dark
+            </button>
+            <button class="btn btn-secondary btn-sm" id="helpBtn">
+                ❓ Help
+            </button>
+            <div class="toolbar-group">
+                <button class="btn btn-secondary btn-sm" id="saveBtn">
+                    💾 Save
+                </button>
+                <button class="btn btn-secondary btn-sm" id="loadBtn">
+                    📁 Load
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <button class="btn btn-secondary btn-sm" id="exportPngBtn">
+                    🖼️ PNG
+                </button>
+                <button class="btn btn-secondary btn-sm" id="exportPdfBtn">
+                    📄 PDF
+                </button>
+                <button class="btn btn-secondary btn-sm" id="exportSvgBtn">
+                    🎨 SVG
+                </button>
+                <button class="btn btn-secondary btn-sm" id="exportJsonBtn">
+                    📋 JSON
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <button class="btn btn-primary btn-sm" id="addPersonBtn">
+                ➕ Add Person
+            </button>
+            <button class="btn btn-secondary btn-sm" id="autoLayoutBtn">
+                🎯 Auto Layout
+            </button>
+        </div>
+        <div class="toolbar-group">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search people...">
+                <button class="search-clear" id="searchClear">✕</button>
+            </div>
+        </div>
+        <div class="toolbar-group">
+            <span style="font-size: 0.875rem; color: var(--text-secondary);">
+                <span id="personCount">0</span> people
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Templates -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Templates</h3>
+                <div class="template-grid">
+                    <div class="template-card active" data-template="startup">
+                        <div style="font-size: 1.5rem;">🚀</div>
+                        <div class="template-name">Startup</div>
+                    </div>
+                    <div class="template-card" data-template="corporate">
+                        <div style="font-size: 1.5rem;">🏢</div>
+                        <div class="template-name">Corporate</div>
+                    </div>
+                    <div class="template-card" data-template="flat">
+                        <div style="font-size: 1.5rem;">🌐</div>
+                        <div class="template-name">Flat</div>
+                    </div>
+                    <div class="template-card" data-template="matrix">
+                        <div style="font-size: 1.5rem;">🎯</div>
+                        <div class="template-name">Matrix</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Departments -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Departments</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="person-department dept-executive" style="margin: 0; font-size: 0.75rem;">Executive</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="person-department dept-engineering" style="margin: 0; font-size: 0.75rem;">Engineering</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="person-department dept-design" style="margin: 0; font-size: 0.75rem;">Design</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="person-department dept-marketing" style="margin: 0; font-size: 0.75rem;">Marketing</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="person-department dept-sales" style="margin: 0; font-size: 0.75rem;">Sales</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="person-department dept-hr" style="margin: 0; font-size: 0.75rem;">HR</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="person-department dept-finance" style="margin: 0; font-size: 0.75rem;">Finance</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="person-department dept-operations" style="margin: 0; font-size: 0.75rem;">Operations</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Statistics</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Total People:</span>
+                        <span id="totalPeople">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Departments:</span>
+                        <span id="totalDepartments">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Hierarchy Levels:</span>
+                        <span id="hierarchyLevels">0</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Canvas -->
+        <main class="canvas-container">
+            <div class="canvas-wrapper">
+                <div class="org-chart-canvas" id="orgChart">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+
+            <!-- Zoom Controls -->
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoomInBtn">+</button>
+                <div class="zoom-level" id="zoomLevel">100%</div>
+                <button class="zoom-btn" id="zoomOutBtn">-</button>
+                <button class="zoom-btn" id="fitToScreenBtn">⌂</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="personModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="personModalTitle">Add Person</h2>
+            </div>
+            <div class="modal-body">
+                <form id="personForm">
+                    <div class="form-group">
+                        <label class="form-label" for="personName">Full Name</label>
+                        <input type="text" class="form-input" id="personName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="personTitle">Job Title</label>
+                        <input type="text" class="form-input" id="personTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="personDepartment">Department</label>
+                        <select class="form-select" id="personDepartment" required>
+                            <option value="">Select Department</option>
+                            <option value="executive">Executive</option>
+                            <option value="engineering">Engineering</option>
+                            <option value="design">Design</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="sales">Sales</option>
+                            <option value="hr">HR</option>
+                            <option value="finance">Finance</option>
+                            <option value="operations">Operations</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="personManager">Manager</label>
+                        <select class="form-select" id="personManager">
+                            <option value="">No Manager (Top Level)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="personAvatar">Avatar URL (optional)</label>
+                        <input type="url" class="form-input" id="personAvatar" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="personEmail">Email (optional)</label>
+                        <input type="email" class="form-input" id="personEmail">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="personBio">Bio (optional)</label>
+                        <textarea class="form-textarea" id="personBio" placeholder="Brief description..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelPersonBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="personForm" id="savePersonBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" id="editPersonMenu">✏️ Edit</div>
+        <div class="context-menu-item" id="addSubordinateMenu">👤 Add Subordinate</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" id="promoteMenu">⬆️ Promote</div>
+        <div class="context-menu-item" id="demoteMenu">⬇️ Demote</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" id="deletePersonMenu">🗑️ Delete</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Keyboard Shortcuts Help -->
+    <div class="shortcuts-help" id="shortcutsHelp">
+        <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Keyboard Shortcuts</div>
+        <div class="shortcut-item">
+            <span>Add Person</span>
+            <span class="shortcut-key">A</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Auto Layout</span>
+            <span class="shortcut-key">L</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Save</span>
+            <span class="shortcut-key">Ctrl+S</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Undo</span>
+            <span class="shortcut-key">Ctrl+Z</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Redo</span>
+            <span class="shortcut-key">Ctrl+Y</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Delete</span>
+            <span class="shortcut-key">Del</span>
+        </div>
+        <div class="shortcut-item">
+            <span>Help</span>
+            <span class="shortcut-key">?</span>
+        </div>
+    </div>
+
+    <script>
+        class OrgChartApp {
+            constructor() {
+                this.people = new Map();
+                this.connections = new Map();
+                this.selectedPerson = null;
+                this.draggedPerson = null;
+                this.dragOffset = { x: 0, y: 0 };
+                this.isCanvasDragging = false;
+                this.canvasOffset = { x: 0, y: 0 };
+                this.zoomLevel = 1;
+                this.history = [];
+                this.historyIndex = -1;
+                this.contextMenuTarget = null;
+                
+                this.templates = {
+                    startup: {
+                        positions: {
+                            'ceo': { x: 400, y: 50 },
+                            'cto': { x: 200, y: 200 },
+                            'vp-sales': { x: 600, y: 200 },
+                            'lead-eng': { x: 100, y: 350 },
+                            'lead-design': { x: 300, y: 350 }
+                        },
+                        people: [
+                            { id: 'ceo', name: 'Alex Johnson', title: 'CEO & Founder', department: 'executive', managerId: null },
+                            { id: 'cto', name: 'Sarah Chen', title: 'CTO', department: 'engineering', managerId: 'ceo' },
+                            { id: 'vp-sales', name: 'Mike Rodriguez', title: 'VP Sales', department: 'sales', managerId: 'ceo' },
+                            { id: 'lead-eng', name: 'David Kim', title: 'Lead Engineer', department: 'engineering', managerId: 'cto' },
+                            { id: 'lead-design', name: 'Emma Wilson', title: 'Lead Designer', department: 'design', managerId: 'cto' }
+                        ]
+                    },
+                    corporate: {
+                        positions: {
+                            'ceo': { x: 400, y: 50 },
+                            'coo': { x: 200, y: 180 },
+                            'cfo': { x: 400, y: 180 },
+                            'cto': { x: 600, y: 180 },
+                            'vp-eng': { x: 500, y: 310 },
+                            'vp-sales': { x: 700, y: 310 },
+                            'director-hr': { x: 100, y: 310 },
+                            'controller': { x: 300, y: 310 }
+                        },
+                        people: [
+                            { id: 'ceo', name: 'Robert Smith', title: 'Chief Executive Officer', department: 'executive', managerId: null },
+                            { id: 'coo', name: 'Lisa Anderson', title: 'Chief Operating Officer', department: 'operations', managerId: 'ceo' },
+                            { id: 'cfo', name: 'Michael Brown', title: 'Chief Financial Officer', department: 'finance', managerId: 'ceo' },
+                            { id: 'cto', name: 'Jennifer Davis', title: 'Chief Technology Officer', department: 'engineering', managerId: 'ceo' },
+                            { id: 'vp-eng', name: 'James Wilson', title: 'VP Engineering', department: 'engineering', managerId: 'cto' },
+                            { id: 'vp-sales', name: 'Amy Taylor', title: 'VP Sales', department: 'sales', managerId: 'coo' },
+                            { id: 'director-hr', name: 'Carlos Martinez', title: 'Director of HR', department: 'hr', managerId: 'coo' },
+                            { id: 'controller', name: 'Helen Chang', title: 'Controller', department: 'finance', managerId: 'cfo' }
+                        ]
+                    },
+                    flat: {
+                        positions: {
+                            'founder': { x: 400, y: 100 },
+                            'eng1': { x: 150, y: 280 },
+                            'eng2': { x: 300, y: 280 },
+                            'designer': { x: 450, y: 280 },
+                            'marketer': { x: 600, y: 280 },
+                            'sales': { x: 750, y: 280 }
+                        },
+                        people: [
+                            { id: 'founder', name: 'Jordan Parker', title: 'Founder', department: 'executive', managerId: null },
+                            { id: 'eng1', name: 'Sam Rodriguez', title: 'Full Stack Developer', department: 'engineering', managerId: 'founder' },
+                            { id: 'eng2', name: 'Alex Thompson', title: 'Frontend Developer', department: 'engineering', managerId: 'founder' },
+                            { id: 'designer', name: 'Maya Patel', title: 'Product Designer', department: 'design', managerId: 'founder' },
+                            { id: 'marketer', name: 'Chris Lee', title: 'Growth Marketer', department: 'marketing', managerId: 'founder' },
+                            { id: 'sales', name: 'Taylor Morgan', title: 'Sales Rep', department: 'sales', managerId: 'founder' }
+                        ]
+                    },
+                    matrix: {
+                        positions: {
+                            'ceo': { x: 400, y: 50 },
+                            'pm1': { x: 250, y: 180 },
+                            'pm2': { x: 550, y: 180 },
+                            'eng1': { x: 150, y: 310 },
+                            'eng2': { x: 350, y: 310 },
+                            'designer': { x: 550, y: 310 },
+                            'analyst': { x: 750, y: 310 }
+                        },
+                        people: [
+                            { id: 'ceo', name: 'Dana Williams', title: 'CEO', department: 'executive', managerId: null },
+                            { id: 'pm1', name: 'Kevin Zhang', title: 'Product Manager - Web', department: 'engineering', managerId: 'ceo' },
+                            { id: 'pm2', name: 'Sofia Gonzalez', title: 'Product Manager - Mobile', department: 'engineering', managerId: 'ceo' },
+                            { id: 'eng1', name: 'Ryan Murphy', title: 'Senior Engineer', department: 'engineering', managerId: 'pm1' },
+                            { id: 'eng2', name: 'Nina Scott', title: 'Senior Engineer', department: 'engineering', managerId: 'pm2' },
+                            { id: 'designer', name: 'Zoe Adams', title: 'UX Designer', department: 'design', managerId: 'pm1' },
+                            { id: 'analyst', name: 'Mark Evans', title: 'Data Analyst', department: 'operations', managerId: 'pm2' }
+                        ]
+                    }
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadTemplate('startup');
+                this.saveToHistory();
+                this.updateStats();
+                this.updatePersonCount();
+            }
+
+            setupEventListeners() {
+                // Header controls
+                document.getElementById('undoBtn').addEventListener('click', () => this.undo());
+                document.getElementById('redoBtn').addEventListener('click', () => this.redo());
+                document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+                document.getElementById('helpBtn').addEventListener('click', () => this.toggleHelp());
+                document.getElementById('saveBtn').addEventListener('click', () => this.saveChart());
+                document.getElementById('loadBtn').addEventListener('click', () => this.loadChart());
+
+                // Export buttons
+                document.getElementById('exportPngBtn').addEventListener('click', () => this.exportPNG());
+                document.getElementById('exportPdfBtn').addEventListener('click', () => this.exportPDF());
+                document.getElementById('exportSvgBtn').addEventListener('click', () => this.exportSVG());
+                document.getElementById('exportJsonBtn').addEventListener('click', () => this.exportJSON());
+
+                // Toolbar
+                document.getElementById('addPersonBtn').addEventListener('click', () => this.showPersonModal());
+                document.getElementById('autoLayoutBtn').addEventListener('click', () => this.autoLayout());
+
+                // Search
+                document.getElementById('searchInput').addEventListener('input', (e) => this.searchPeople(e.target.value));
+                document.getElementById('searchClear').addEventListener('click', () => this.clearSearch());
+
+                // Templates
+                document.querySelectorAll('.template-card').forEach(card => {
+                    card.addEventListener('click', () => this.loadTemplate(card.dataset.template));
+                });
+
+                // Zoom controls
+                document.getElementById('zoomInBtn').addEventListener('click', () => this.zoomIn());
+                document.getElementById('zoomOutBtn').addEventListener('click', () => this.zoomOut());
+                document.getElementById('fitToScreenBtn').addEventListener('click', () => this.fitToScreen());
+
+                // Person modal
+                document.getElementById('cancelPersonBtn').addEventListener('click', () => this.hidePersonModal());
+                document.getElementById('personForm').addEventListener('submit', (e) => this.savePerson(e));
+
+                // Canvas events
+                const canvas = document.getElementById('orgChart');
+                canvas.addEventListener('mousedown', (e) => this.onCanvasMouseDown(e));
+                canvas.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e));
+                canvas.addEventListener('mouseup', (e) => this.onCanvasMouseUp(e));
+                canvas.addEventListener('contextmenu', (e) => this.onCanvasContextMenu(e));
+                canvas.addEventListener('click', (e) => this.onCanvasClick(e));
+
+                // Context menu
+                document.getElementById('editPersonMenu').addEventListener('click', () => this.editPerson(this.contextMenuTarget));
+                document.getElementById('addSubordinateMenu').addEventListener('click', () => this.addSubordinate(this.contextMenuTarget));
+                document.getElementById('deletePersonMenu').addEventListener('click', () => this.deletePerson(this.contextMenuTarget));
+
+                // Global events
+                document.addEventListener('click', (e) => this.onDocumentClick(e));
+                document.addEventListener('keydown', (e) => this.onKeyDown(e));
+                window.addEventListener('resize', () => this.onWindowResize());
+
+                // Prevent default drag behavior
+                document.addEventListener('dragstart', (e) => e.preventDefault());
+            }
+
+            loadTemplate(templateName) {
+                if (!this.templates[templateName]) return;
+
+                this.people.clear();
+                this.connections.clear();
+                
+                const template = this.templates[templateName];
+                
+                // Add people
+                template.people.forEach(person => {
+                    const position = template.positions[person.id] || { x: 400, y: 200 };
+                    this.people.set(person.id, {
+                        ...person,
+                        x: position.x,
+                        y: position.y,
+                        avatar: person.avatar || this.generateAvatar(person.name)
+                    });
+                });
+
+                // Update UI
+                document.querySelectorAll('.template-card').forEach(card => {
+                    card.classList.toggle('active', card.dataset.template === templateName);
+                });
+
+                this.renderChart();
+                this.updateManagerDropdown();
+                this.saveToHistory();
+                this.updateStats();
+                this.updatePersonCount();
+                this.showToast('Template loaded successfully', 'success');
+            }
+
+            showPersonModal(editPerson = null) {
+                const modal = document.getElementById('personModal');
+                const title = document.getElementById('personModalTitle');
+                const form = document.getElementById('personForm');
+
+                if (editPerson) {
+                    title.textContent = 'Edit Person';
+                    document.getElementById('personName').value = editPerson.name;
+                    document.getElementById('personTitle').value = editPerson.title;
+                    document.getElementById('personDepartment').value = editPerson.department;
+                    document.getElementById('personManager').value = editPerson.managerId || '';
+                    document.getElementById('personAvatar').value = editPerson.avatarUrl || '';
+                    document.getElementById('personEmail').value = editPerson.email || '';
+                    document.getElementById('personBio').value = editPerson.bio || '';
+                } else {
+                    title.textContent = 'Add Person';
+                    form.reset();
+                }
+
+                this.updateManagerDropdown(editPerson?.id);
+                modal.classList.add('show');
+                document.getElementById('personName').focus();
+            }
+
+            hidePersonModal() {
+                document.getElementById('personModal').classList.remove('show');
+                this.selectedPerson = null;
+            }
+
+            updateManagerDropdown(excludeId = null) {
+                const select = document.getElementById('personManager');
+                select.innerHTML = '<option value="">No Manager (Top Level)</option>';
+
+                this.people.forEach((person, id) => {
+                    if (id !== excludeId) {
+                        const option = document.createElement('option');
+                        option.value = id;
+                        option.textContent = person.name;
+                        select.appendChild(option);
+                    }
+                });
+            }
+
+            savePerson(e) {
+                e.preventDefault();
+
+                const formData = {
+                    name: document.getElementById('personName').value,
+                    title: document.getElementById('personTitle').value,
+                    department: document.getElementById('personDepartment').value,
+                    managerId: document.getElementById('personManager').value || null,
+                    avatarUrl: document.getElementById('personAvatar').value,
+                    email: document.getElementById('personEmail').value,
+                    bio: document.getElementById('personBio').value
+                };
+
+                if (this.selectedPerson) {
+                    // Edit existing person
+                    const person = this.people.get(this.selectedPerson);
+                    Object.assign(person, formData);
+                    this.showToast('Person updated successfully', 'success');
+                } else {
+                    // Add new person
+                    const id = this.generateId();
+                    const newPerson = {
+                        id,
+                        ...formData,
+                        x: 400 + Math.random() * 200 - 100,
+                        y: 300 + Math.random() * 200 - 100,
+                        avatar: formData.avatarUrl || this.generateAvatar(formData.name)
+                    };
+
+                    this.people.set(id, newPerson);
+                    this.showToast('Person added successfully', 'success');
+                }
+
+                this.renderChart();
+                this.updateManagerDropdown();
+                this.hidePersonModal();
+                this.saveToHistory();
+                this.updateStats();
+                this.updatePersonCount();
+            }
+
+            generateId() {
+                return 'person_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            generateAvatar(name) {
+                const names = name.split(' ');
+                const initials = names.map(n => n[0]).join('').toUpperCase();
+                return initials.substring(0, 2);
+            }
+
+            renderChart() {
+                const canvas = document.getElementById('orgChart');
+                canvas.innerHTML = '';
+
+                // Apply zoom and offset
+                canvas.style.transform = `translate(${this.canvasOffset.x}px, ${this.canvasOffset.y}px) scale(${this.zoomLevel})`;
+
+                // Render connections first
+                this.renderConnections(canvas);
+
+                // Render people
+                this.people.forEach((person, id) => {
+                    const personElement = this.createPersonElement(person);
+                    canvas.appendChild(personElement);
+                });
+            }
+
+            createPersonElement(person) {
+                const element = document.createElement('div');
+                element.className = 'person-card';
+                element.dataset.personId = person.id;
+                element.style.left = person.x + 'px';
+                element.style.top = person.y + 'px';
+
+                // Add collaboration indicator (random demo)
+                const collabClass = Math.random() > 0.8 ? `user${Math.floor(Math.random() * 3) + 1}` : '';
+                const collabIndicator = collabClass ? `<div class="collab-indicator ${collabClass}"></div>` : '';
+
+                element.innerHTML = `
+                    ${collabIndicator}
+                    <div class="person-header">
+                        <div class="person-avatar">
+                            ${person.avatarUrl ? 
+                                `<img src="${person.avatarUrl}" alt="${person.name}">` : 
+                                person.avatar
+                            }
+                        </div>
+                        <div class="person-name">${person.name}</div>
+                        <div class="person-title">${person.title}</div>
+                        <div class="person-department dept-${person.department}">${person.department}</div>
+                    </div>
+                `;
+
+                return element;
+            }
+
+            renderConnections(canvas) {
+                // Clear existing connection lines
+                canvas.querySelectorAll('.connection-line').forEach(line => line.remove());
+
+                this.people.forEach(person => {
+                    if (person.managerId) {
+                        const manager = this.people.get(person.managerId);
+                        if (manager) {
+                            this.createConnectionLine(canvas, manager, person);
+                        }
+                    }
+                });
+            }
+
+            createConnectionLine(canvas, manager, person) {
+                const managerX = manager.x + 100; // Card width / 2
+                const managerY = manager.y + 120; // Card height
+                const personX = person.x + 100;
+                const personY = person.y;
+
+                // Vertical line from manager
+                const vLine1 = document.createElement('div');
+                vLine1.className = 'connection-line vertical';
+                vLine1.style.left = managerX + 'px';
+                vLine1.style.top = managerY + 'px';
+                vLine1.style.height = '20px';
+                canvas.appendChild(vLine1);
+
+                // Horizontal line
+                const hLine = document.createElement('div');
+                hLine.className = 'connection-line horizontal';
+                const minX = Math.min(managerX, personX);
+                const maxX = Math.max(managerX, personX);
+                hLine.style.left = minX + 'px';
+                hLine.style.top = (managerY + 20) + 'px';
+                hLine.style.width = (maxX - minX) + 'px';
+                canvas.appendChild(hLine);
+
+                // Vertical line to person
+                const vLine2 = document.createElement('div');
+                vLine2.className = 'connection-line vertical';
+                vLine2.style.left = personX + 'px';
+                vLine2.style.top = (managerY + 20) + 'px';
+                vLine2.style.height = (personY - managerY - 20) + 'px';
+                canvas.appendChild(vLine2);
+            }
+
+            onCanvasMouseDown(e) {
+                const personCard = e.target.closest('.person-card');
+                
+                if (personCard) {
+                    this.selectedPerson = personCard.dataset.personId;
+                    this.draggedPerson = this.selectedPerson;
+                    
+                    const rect = personCard.getBoundingClientRect();
+                    this.dragOffset = {
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top
+                    };
+
+                    personCard.classList.add('dragging');
+                    this.selectPerson(this.selectedPerson);
+                } else {
+                    this.isCanvasDragging = true;
+                    this.dragOffset = { x: e.clientX, y: e.clientY };
+                    document.getElementById('orgChart').style.cursor = 'grabbing';
+                    this.clearSelection();
+                }
+
+                this.hideContextMenu();
+            }
+
+            onCanvasMouseMove(e) {
+                if (this.draggedPerson) {
+                    const person = this.people.get(this.draggedPerson);
+                    if (person) {
+                        person.x = (e.clientX - this.canvasOffset.x) / this.zoomLevel - this.dragOffset.x;
+                        person.y = (e.clientY - this.canvasOffset.y) / this.zoomLevel - this.dragOffset.y;
+                        
+                        const personElement = document.querySelector(`[data-person-id="${this.draggedPerson}"]`);
+                        personElement.style.left = person.x + 'px';
+                        personElement.style.top = person.y + 'px';
+                        
+                        this.renderConnections(document.getElementById('orgChart'));
+                    }
+                } else if (this.isCanvasDragging) {
+                    this.canvasOffset.x += e.clientX - this.dragOffset.x;
+                    this.canvasOffset.y += e.clientY - this.dragOffset.y;
+                    this.dragOffset = { x: e.clientX, y: e.clientY };
+                    
+                    document.getElementById('orgChart').style.transform = 
+                        `translate(${this.canvasOffset.x}px, ${this.canvasOffset.y}px) scale(${this.zoomLevel})`;
+                }
+            }
+
+            onCanvasMouseUp(e) {
+                if (this.draggedPerson) {
+                    const personElement = document.querySelector(`[data-person-id="${this.draggedPerson}"]`);
+                    personElement.classList.remove('dragging');
+                    this.saveToHistory();
+                }
+
+                this.draggedPerson = null;
+                this.isCanvasDragging = false;
+                document.getElementById('orgChart').style.cursor = '';
+            }
+
+            onCanvasContextMenu(e) {
+                e.preventDefault();
+                
+                const personCard = e.target.closest('.person-card');
+                if (personCard) {
+                    this.contextMenuTarget = personCard.dataset.personId;
+                    this.showContextMenu(e.clientX, e.clientY);
+                    this.selectPerson(this.contextMenuTarget);
+                }
+            }
+
+            onCanvasClick(e) {
+                if (!e.target.closest('.person-card')) {
+                    this.clearSelection();
+                }
+            }
+
+            showContextMenu(x, y) {
+                const menu = document.getElementById('contextMenu');
+                menu.style.left = x + 'px';
+                menu.style.top = y + 'px';
+                menu.style.display = 'block';
+            }
+
+            hideContextMenu() {
+                document.getElementById('contextMenu').style.display = 'none';
+                this.contextMenuTarget = null;
+            }
+
+            onDocumentClick(e) {
+                if (!e.target.closest('.context-menu')) {
+                    this.hideContextMenu();
+                }
+            }
+
+            selectPerson(personId) {
+                document.querySelectorAll('.person-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                const personElement = document.querySelector(`[data-person-id="${personId}"]`);
+                if (personElement) {
+                    personElement.classList.add('selected');
+                }
+                
+                this.selectedPerson = personId;
+            }
+
+            clearSelection() {
+                document.querySelectorAll('.person-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                this.selectedPerson = null;
+            }
+
+            editPerson(personId) {
+                if (!personId) return;
+                const person = this.people.get(personId);
+                if (person) {
+                    this.selectedPerson = personId;
+                    this.showPersonModal(person);
+                }
+                this.hideContextMenu();
+            }
+
+            addSubordinate(managerId) {
+                this.selectedPerson = null;
+                this.showPersonModal();
+                setTimeout(() => {
+                    document.getElementById('personManager').value = managerId;
+                }, 100);
+                this.hideContextMenu();
+            }
+
+            deletePerson(personId) {
+                if (!personId) return;
+                
+                if (confirm('Are you sure you want to delete this person? This will also update their subordinates.')) {
+                    const person = this.people.get(personId);
+                    
+                    // Update subordinates to report to this person's manager
+                    this.people.forEach(p => {
+                        if (p.managerId === personId) {
+                            p.managerId = person.managerId;
+                        }
+                    });
+                    
+                    this.people.delete(personId);
+                    this.renderChart();
+                    this.updateManagerDropdown();
+                    this.saveToHistory();
+                    this.updateStats();
+                    this.updatePersonCount();
+                    this.showToast('Person deleted', 'info');
+                }
+                this.hideContextMenu();
+            }
+
+            autoLayout() {
+                const levels = new Map();
+                const processed = new Set();
+                
+                // Find root nodes (no manager)
+                const roots = Array.from(this.people.values()).filter(p => !p.managerId);
+                
+                // Build hierarchy levels
+                function assignLevel(person, level) {
+                    if (processed.has(person.id)) return;
+                    processed.add(person.id);
+                    
+                    if (!levels.has(level)) {
+                        levels.set(level, []);
+                    }
+                    levels.get(level).push(person);
+                    
+                    // Process subordinates
+                    const subordinates = Array.from(this.people.values())
+                        .filter(p => p.managerId === person.id);
+                    subordinates.forEach(sub => assignLevel(sub, level + 1));
+                }
+                
+                roots.forEach(root => assignLevel.call(this, root, 0));
+                
+                // Position people
+                const startY = 100;
+                const levelHeight = 200;
+                const cardWidth = 220;
+                
+                levels.forEach((people, level) => {
+                    const y = startY + level * levelHeight;
+                    const totalWidth = people.length * cardWidth;
+                    const startX = Math.max(50, (800 - totalWidth) / 2);
+                    
+                    people.forEach((person, index) => {
+                        person.x = startX + index * cardWidth;
+                        person.y = y;
+                    });
+                });
+                
+                this.renderChart();
+                this.saveToHistory();
+                this.showToast('Auto-layout applied', 'success');
+            }
+
+            searchPeople(query) {
+                const normalizedQuery = query.toLowerCase().trim();
+                
+                document.querySelectorAll('.person-card').forEach(card => {
+                    const personId = card.dataset.personId;
+                    const person = this.people.get(personId);
+                    
+                    if (!normalizedQuery) {
+                        card.style.opacity = '1';
+                        card.style.transform = '';
+                        return;
+                    }
+                    
+                    const matches = person.name.toLowerCase().includes(normalizedQuery) ||
+                                  person.title.toLowerCase().includes(normalizedQuery) ||
+                                  person.department.toLowerCase().includes(normalizedQuery);
+                    
+                    if (matches) {
+                        card.style.opacity = '1';
+                        card.style.transform = 'scale(1.05)';
+                        card.style.boxShadow = '0 0 20px rgba(37, 99, 235, 0.3)';
+                    } else {
+                        card.style.opacity = '0.3';
+                        card.style.transform = '';
+                        card.style.boxShadow = '';
+                    }
+                });
+            }
+
+            clearSearch() {
+                document.getElementById('searchInput').value = '';
+                this.searchPeople('');
+            }
+
+            zoomIn() {
+                this.zoomLevel = Math.min(this.zoomLevel * 1.2, 3);
+                this.updateZoom();
+            }
+
+            zoomOut() {
+                this.zoomLevel = Math.max(this.zoomLevel / 1.2, 0.3);
+                this.updateZoom();
+            }
+
+            fitToScreen() {
+                // Reset zoom and center
+                this.zoomLevel = 1;
+                this.canvasOffset = { x: 0, y: 0 };
+                this.updateZoom();
+            }
+
+            updateZoom() {
+                document.getElementById('orgChart').style.transform = 
+                    `translate(${this.canvasOffset.x}px, ${this.canvasOffset.y}px) scale(${this.zoomLevel})`;
+                document.getElementById('zoomLevel').textContent = Math.round(this.zoomLevel * 100) + '%';
+            }
+
+            saveToHistory() {
+                // Remove any future history
+                this.history = this.history.slice(0, this.historyIndex + 1);
+                
+                // Add current state
+                const state = {
+                    people: new Map(this.people),
+                    canvasOffset: { ...this.canvasOffset },
+                    zoomLevel: this.zoomLevel
+                };
+                
+                this.history.push(state);
+                this.historyIndex++;
+                
+                // Limit history size
+                if (this.history.length > 50) {
+                    this.history.shift();
+                    this.historyIndex--;
+                }
+                
+                this.updateHistoryButtons();
+            }
+
+            undo() {
+                if (this.historyIndex > 0) {
+                    this.historyIndex--;
+                    this.loadHistoryState(this.history[this.historyIndex]);
+                    this.showToast('Undone', 'info');
+                }
+            }
+
+            redo() {
+                if (this.historyIndex < this.history.length - 1) {
+                    this.historyIndex++;
+                    this.loadHistoryState(this.history[this.historyIndex]);
+                    this.showToast('Redone', 'info');
+                }
+            }
+
+            loadHistoryState(state) {
+                this.people = new Map(state.people);
+                this.canvasOffset = { ...state.canvasOffset };
+                this.zoomLevel = state.zoomLevel;
+                
+                this.renderChart();
+                this.updateManagerDropdown();
+                this.updateStats();
+                this.updatePersonCount();
+                this.updateHistoryButtons();
+                this.updateZoom();
+            }
+
+            updateHistoryButtons() {
+                document.getElementById('undoBtn').disabled = this.historyIndex <= 0;
+                document.getElementById('redoBtn').disabled = this.historyIndex >= this.history.length - 1;
+            }
+
+            toggleTheme() {
+                const body = document.body;
+                const button = document.getElementById('themeToggle');
+                
+                if (body.dataset.theme === 'dark') {
+                    body.dataset.theme = 'light';
+                    button.textContent = '🌙 Dark';
+                } else {
+                    body.dataset.theme = 'dark';
+                    button.textContent = '☀️ Light';
+                }
+                
+                localStorage.setItem('theme', body.dataset.theme);
+            }
+
+            toggleHelp() {
+                const help = document.getElementById('shortcutsHelp');
+                help.classList.toggle('show');
+            }
+
+            saveChart() {
+                const chartData = {
+                    people: Array.from(this.people.entries()),
+                    canvasOffset: this.canvasOffset,
+                    zoomLevel: this.zoomLevel,
+                    timestamp: new Date().toISOString()
+                };
+                
+                localStorage.setItem('orgchart_data', JSON.stringify(chartData));
+                this.showToast('Chart saved to browser storage', 'success');
+            }
+
+            loadChart() {
+                const saved = localStorage.getItem('orgchart_data');
+                if (!saved) {
+                    this.showToast('No saved chart found', 'warning');
+                    return;
+                }
+                
+                try {
+                    const chartData = JSON.parse(saved);
+                    this.people = new Map(chartData.people);
+                    this.canvasOffset = chartData.canvasOffset || { x: 0, y: 0 };
+                    this.zoomLevel = chartData.zoomLevel || 1;
+                    
+                    this.renderChart();
+                    this.updateManagerDropdown();
+                    this.saveToHistory();
+                    this.updateStats();
+                    this.updatePersonCount();
+                    this.updateZoom();
+                    
+                    this.showToast('Chart loaded successfully', 'success');
+                } catch (e) {
+                    this.showToast('Error loading chart', 'error');
+                }
+            }
+
+            async exportPNG() {
+                const button = document.getElementById('exportPngBtn');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span class="loading">📸 <span class="spinner"></span></span>';
+                button.disabled = true;
+
+                try {
+                    const canvas = document.getElementById('orgChart');
+                    const result = await html2canvas(canvas, {
+                        backgroundColor: '#ffffff',
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true
+                    });
+                    
+                    const link = document.createElement('a');
+                    link.download = `orgchart-${new Date().toISOString().split('T')[0]}.png`;
+                    link.href = result.toDataURL();
+                    link.click();
+                    
+                    this.showToast('PNG exported successfully', 'success');
+                } catch (e) {
+                    this.showToast('Error exporting PNG', 'error');
+                    console.error(e);
+                } finally {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
+            }
+
+            async exportPDF() {
+                const button = document.getElementById('exportPdfBtn');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span class="loading">📄 <span class="spinner"></span></span>';
+                button.disabled = true;
+
+                try {
+                    const canvas = document.getElementById('orgChart');
+                    const canvasElement = await html2canvas(canvas, {
+                        backgroundColor: '#ffffff',
+                        scale: 1,
+                        useCORS: true
+                    });
+                    
+                    const imgData = canvasElement.toDataURL('image/png');
+                    const pdf = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+                    
+                    const imgWidth = 297; // A4 landscape width in mm
+                    const pageHeight = 210; // A4 landscape height in mm
+                    const imgHeight = (canvasElement.height * imgWidth) / canvasElement.width;
+                    let heightLeft = imgHeight;
+                    let position = 0;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                    
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+                    
+                    pdf.save(`orgchart-${new Date().toISOString().split('T')[0]}.pdf`);
+                    this.showToast('PDF exported successfully', 'success');
+                } catch (e) {
+                    this.showToast('Error exporting PDF', 'error');
+                    console.error(e);
+                } finally {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
+            }
+
+            exportSVG() {
+                try {
+                    const canvas = document.getElementById('orgChart');
+                    const rect = canvas.getBoundingClientRect();
+                    
+                    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}" viewBox="0 0 ${rect.width} ${rect.height}">`;
+                    
+                    // Add styles
+                    svg += '<defs><style type="text/css">';
+                    svg += '.person-card { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }';
+                    svg += '.person-name { font-weight: 600; font-size: 16px; }';
+                    svg += '.person-title { font-size: 14px; color: #64748b; }';
+                    svg += '</style></defs>';
+                    
+                    // Add background
+                    svg += `<rect width="100%" height="100%" fill="white"/>`;
+                    
+                    // Add connection lines
+                    this.people.forEach(person => {
+                        if (person.managerId) {
+                            const manager = this.people.get(person.managerId);
+                            if (manager) {
+                                const x1 = manager.x + 100;
+                                const y1 = manager.y + 120;
+                                const x2 = person.x + 100;
+                                const y2 = person.y;
+                                
+                                svg += `<path d="M ${x1} ${y1} L ${x1} ${y1 + 20} L ${x2} ${y1 + 20} L ${x2} ${y2}" stroke="#94a3b8" stroke-width="2" fill="none"/>`;
+                            }
+                        }
+                    });
+                    
+                    // Add people
+                    this.people.forEach(person => {
+                        const deptColors = {
+                            engineering: '#3b82f6',
+                            design: '#8b5cf6',
+                            marketing: '#10b981',
+                            sales: '#f59e0b',
+                            hr: '#ef4444',
+                            finance: '#6366f1',
+                            operations: '#06b6d4',
+                            executive: '#1f2937'
+                        };
+                        
+                        svg += `<g transform="translate(${person.x}, ${person.y})">`;
+                        svg += `<rect width="200" height="120" rx="12" fill="white" stroke="#e2e8f0" stroke-width="2"/>`;
+                        svg += `<circle cx="100" cy="40" r="20" fill="${deptColors[person.department] || '#6366f1'}"/>`;
+                        svg += `<text x="100" y="46" text-anchor="middle" fill="white" font-weight="600">${person.avatar}</text>`;
+                        svg += `<text x="100" y="70" text-anchor="middle" class="person-name">${person.name}</text>`;
+                        svg += `<text x="100" y="88" text-anchor="middle" class="person-title">${person.title}</text>`;
+                        svg += `<rect x="70" y="95" width="60" height="16" rx="8" fill="${deptColors[person.department] || '#6366f1'}"/>`;
+                        svg += `<text x="100" y="105" text-anchor="middle" fill="white" font-size="10" font-weight="500">${person.department}</text>`;
+                        svg += '</g>';
+                    });
+                    
+                    svg += '</svg>';
+                    
+                    const blob = new Blob([svg], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = `orgchart-${new Date().toISOString().split('T')[0]}.svg`;
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    
+                    this.showToast('SVG exported successfully', 'success');
+                } catch (e) {
+                    this.showToast('Error exporting SVG', 'error');
+                    console.error(e);
+                }
+            }
+
+            exportJSON() {
+                const data = {
+                    people: Array.from(this.people.entries()),
+                    metadata: {
+                        exportDate: new Date().toISOString(),
+                        totalPeople: this.people.size,
+                        version: '1.0'
+                    }
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = `orgchart-${new Date().toISOString().split('T')[0]}.json`;
+                link.href = url;
+                link.click();
+                URL.revokeObjectURL(url);
+                
+                this.showToast('JSON exported successfully', 'success');
+            }
+
+            updateStats() {
+                const departments = new Set();
+                let maxLevel = 0;
+                
+                this.people.forEach(person => {
+                    departments.add(person.department);
+                    
+                    // Calculate hierarchy level
+                    let level = 0;
+                    let current = person;
+                    const visited = new Set();
+                    
+                    while (current.managerId && !visited.has(current.id)) {
+                        visited.add(current.id);
+                        current = this.people.get(current.managerId);
+                        if (current) level++;
+                    }
+                    
+                    maxLevel = Math.max(maxLevel, level);
+                });
+                
+                document.getElementById('totalPeople').textContent = this.people.size;
+                document.getElementById('totalDepartments').textContent = departments.size;
+                document.getElementById('hierarchyLevels').textContent = maxLevel + 1;
+            }
+
+            updatePersonCount() {
+                document.getElementById('personCount').textContent = this.people.size;
+            }
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                
+                container.appendChild(toast);
+                
+                // Trigger show animation
+                setTimeout(() => toast.classList.add('show'), 100);
+                
+                // Auto remove
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => container.removeChild(toast), 300);
+                }, 3000);
+            }
+
+            onKeyDown(e) {
+                // Ignore if user is typing in an input
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                    return;
+                }
+
+                switch(e.key.toLowerCase()) {
+                    case 'a':
+                        e.preventDefault();
+                        this.showPersonModal();
+                        break;
+                    case 'l':
+                        e.preventDefault();
+                        this.autoLayout();
+                        break;
+                    case 'delete':
+                    case 'backspace':
+                        if (this.selectedPerson) {
+                            e.preventDefault();
+                            this.deletePerson(this.selectedPerson);
+                        }
+                        break;
+                    case 's':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault();
+                            this.saveChart();
+                        }
+                        break;
+                    case 'z':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault();
+                            if (e.shiftKey) {
+                                this.redo();
+                            } else {
+                                this.undo();
+                            }
+                        }
+                        break;
+                    case 'y':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault();
+                            this.redo();
+                        }
+                        break;
+                    case '?':
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            this.toggleHelp();
+                        }
+                        break;
+                    case 'escape':
+                        this.hidePersonModal();
+                        this.hideContextMenu();
+                        this.clearSelection();
+                        break;
+                }
+            }
+
+            onWindowResize() {
+                // Update canvas size if needed
+                this.renderChart();
+            }
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.body.dataset.theme = savedTheme;
+                document.getElementById('themeToggle').textContent = 
+                    savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
+            }
+
+            // Start the app
+            window.orgChart = new OrgChartApp();
+        });
+    </script>
+</body>
+</html>
